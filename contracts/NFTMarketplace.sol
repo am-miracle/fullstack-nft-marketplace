@@ -3,16 +3,17 @@ pragma solidity ^0.8.19;
 
 import {ERC721URIStorage} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 // To use console.log
 import "hardhat/console.sol";
 
-contract NFTMarketplace is ERC721URIStorage {
+contract NFTMarketplace is ERC721, ERC721URIStorage, Ownable {
     uint256 private _nextTokenId;
     uint256 private _itemsSold;
     uint256 listingPrice = 0.0015 ether;
 
-    address payable owner;
+    // address payable owner;
 
     struct MarketItem {
         uint256 tokenId;
@@ -33,18 +34,18 @@ contract NFTMarketplace is ERC721URIStorage {
     );
 
     // modifiers
-    modifier onlyOwner() {
-        require(msg.sender == owner, "ONLY OWNER CAN CHANGE");
-        _;
-    }
+    // modifier onlyOwner() {
+    //     require(msg.sender == owner, "ONLY OWNER CAN CHANGE");
+    //     _;
+    // }
 
     /**
      * Initializes the ERC721 token contract with the specified name and symbol.
      * Assigns ownership to the provided address.
      */
-    constructor() ERC721("Nevermind Token", "NVM") {
-        owner = payable(msg.sender);
-    }
+    constructor(
+        address initialOwner
+    ) ERC721("Nevermind Token", "NVM") Ownable(initialOwner) {}
 
     /**
      * @dev Updates the base listing price for all NFTs in the marketplace.
@@ -162,7 +163,7 @@ contract NFTMarketplace is ERC721URIStorage {
 
         _transfer(address(this), msg.sender, tokenId);
 
-        payable(owner).transfer(listingPrice);
+        payable(owner()).transfer(listingPrice);
         payable(idMarketItem[tokenId].seller).transfer(msg.value);
     }
 
@@ -242,5 +243,18 @@ contract NFTMarketplace is ERC721URIStorage {
         }
 
         return items;
+    }
+
+    // The following functions are overrides required by Solidity.
+    function tokenURI(
+        uint256 tokenId
+    ) public view override(ERC721, ERC721URIStorage) returns (string memory) {
+        return super.tokenURI(tokenId);
+    }
+
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view override(ERC721, ERC721URIStorage) returns (bool) {
+        return super.supportsInterface(interfaceId);
     }
 }
